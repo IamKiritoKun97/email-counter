@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MailPulse | Email Productivity Tracker</title>
+<meta name="description" content="MailPulse tracks emails sent as Waiting or Resolved against an hourly target. Works offline; data stays in your browser.">
+<meta name="theme-color" content="#0f1218">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%234f46e5'/%3E%3Crect x='11' y='16' width='42' height='30' rx='6' fill='%23fff'/%3E%3Cpath d='M14 21l18 13 18-13' fill='none' stroke='%234f46e5' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='48' cy='45' r='11' fill='%2334d399' stroke='%234f46e5' stroke-width='3'/%3E%3Cpath d='M43 45l4 4 7-8' fill='none' stroke='%23fff' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+:root{--bg:#0f1218;--card:#171b24;--card2:#1d222d;--line:#2a3140;--tx:#e8ebf1;--mu:#a0a9ba;--w:#f5a524;--r:#34d399;--t:#818cf8;--g:#38bdf8;--ink:#0b0e14;--sh:0 8px 24px rgba(0,0,0,.28);color-scheme:dark}
+[data-theme=light]{--bg:#f3f5f9;--card:#fff;--card2:#f0f2f7;--line:#dde2ec;--tx:#171b26;--mu:#586075;--w:#b45309;--r:#047857;--t:#4338ca;--g:#0369a1;--ink:#fff;--sh:0 6px 20px rgba(30,40,70,.08);color-scheme:light}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;transition:background .25s,color .25s;overflow-x:hidden}
+.wrap{max-width:1120px;margin:0 auto;padding:16px}
+svg.i{width:1.25em;height:1.25em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--g);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:8px 0 18px}
+.brand{display:flex;align-items:center;gap:12px;flex:1 1 240px;min-width:0}
+.logo{width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,#4f46e5,#7c83ff);display:grid;place-items:center;color:#fff;flex:none}
+.logo svg{width:26px;height:26px}
+h1{font-size:1.4rem;margin:0;letter-spacing:-.01em;line-height:1.1}
+.sub{margin:2px 0 0;color:var(--mu);font-size:.9rem}
+.clock{text-align:right;font-variant-numeric:tabular-nums;line-height:1.25}
+.clock b{display:block;font-size:1.15rem}.clock span{color:var(--mu);font-size:.85rem}
+.tools{display:flex;gap:8px}
+.ib{min-width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--card);display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 12px;transition:transform .1s,background .2s}
+.ib:hover{background:var(--card2)}.ib:active{transform:scale(.95)}
+.ib .t{font-size:.85rem}
+@media(max-width:560px){.clock{text-align:left;flex:1 1 100%;order:3}.ib .t{display:none}.ib{padding:0}}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,245px),1fr));gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:var(--sh);position:relative;overflow:hidden;transition:background .25s,border-color .25s}
+.card::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:var(--c)}
+.card.w{--c:var(--w)}.card.r{--c:var(--r)}.card.t{--c:var(--t)}.card.g{--c:var(--g)}
+.lab{display:flex;align-items:center;gap:8px;color:var(--c);font-weight:650;font-size:.95rem}
+.lab .ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 16%,transparent)}
+.num{font-size:3.4rem;font-weight:750;line-height:1.1;margin:12px 0 4px;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.num.bump{animation:bump .3s ease}
+@keyframes bump{40%{transform:scale(1.1);color:var(--c)}}
+.hint{color:var(--mu);font-size:.88rem;min-height:1.3em}
+.btns{display:grid;grid-template-columns:1fr 2fr;gap:10px;margin-top:14px}
+.b{min-height:52px;border-radius:13px;border:1px solid var(--line);background:transparent;font-weight:650;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:transform .1s,filter .2s,background .2s}
+.b:active:not(:disabled){transform:scale(.96)}
+.b.add{background:var(--c);border-color:transparent;color:var(--ink);font-size:1.05rem}
+.card.w .add{color:#1b1200}.card.r .add{color:#032b1d}
+[data-theme=light] .card .add{color:#fff}
+.b.add:hover{filter:brightness(1.08)}
+.b.sub:hover:not(:disabled){background:var(--card2)}
+.b:disabled{opacity:.4;cursor:not-allowed;border-style:dashed}
+.bar{height:12px;border-radius:99px;background:var(--card2);border:1px solid var(--line);overflow:hidden;margin:12px 0 8px}
+.bar i{display:block;height:100%;width:0;background:var(--c);border-radius:99px;transition:width .4s ease}
+.card.done .bar i{background:var(--r)}
+.ok{display:none;align-items:center;gap:6px;color:var(--r);font-weight:650;margin-top:6px}
+.card.done .ok{display:flex}
+.card.pulse{animation:pulse .9s ease 1}
+@keyframes pulse{50%{box-shadow:0 0 0 6px color-mix(in srgb,var(--r) 30%,transparent)}}
+.flash::after{content:attr(data-msg);position:absolute;right:14px;top:14px;font-size:.8rem;font-weight:650;color:var(--c);animation:fl 1.1s ease forwards}
+@keyframes fl{0%{opacity:0;transform:translateY(4px)}15%,70%{opacity:1}100%{opacity:0}}
+.lower{display:grid;gap:14px;margin-top:14px;grid-template-columns:1fr}
+@media(min-width:900px){.lower{grid-template-columns:1fr 1fr}}
+h2{font-size:1.05rem;margin:0}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.scroll{overflow-x:auto;max-height:380px;overflow-y:auto}
+table{width:100%;border-collapse:collapse;font-size:.92rem;font-variant-numeric:tabular-nums}
+th,td{padding:9px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--mu);font-weight:600;position:sticky;top:0;background:var(--card)}
+tr.cur td{background:color-mix(in srgb,var(--g) 10%,transparent)}
+.tag{display:inline-block;font-size:.72rem;padding:1px 7px;border-radius:99px;border:1px solid var(--line);color:var(--mu);margin-left:6px}
+ul{list-style:none;margin:0;padding:0}
+.log{max-height:380px;overflow-y:auto}
+.log li{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:.92rem}
+.log time{color:var(--mu);font-variant-numeric:tabular-nums;min-width:68px;font-size:.84rem}
+.chip{min-width:34px;text-align:center;font-weight:750;border-radius:8px;padding:2px 6px;background:color-mix(in srgb,var(--c) 18%,transparent);color:var(--c)}
+.log li.w{--c:var(--w)}.log li.r{--c:var(--r)}.log li.x{--c:var(--mu)}
+.log li.dim .m{text-decoration:line-through;opacity:.65}
+.empty{color:var(--mu);text-align:center;padding:26px 8px}
+.ghost{min-height:40px;border-radius:11px;border:1px solid var(--line);background:var(--card2);padding:0 14px;display:inline-flex;align-items:center;gap:6px}
+.ghost:hover:not(:disabled){border-color:var(--t)}.ghost:disabled{opacity:.45;cursor:not-allowed}
+.ghost.danger{color:#f87171;border-color:color-mix(in srgb,#f87171 50%,var(--line))}
+.foot{color:var(--mu);font-size:.82rem;text-align:center;margin:18px 0 6px}
+dialog{background:var(--card);color:var(--tx);border:1px solid var(--line);border-radius:18px;padding:0;width:min(460px,calc(100vw - 24px));max-height:calc(100vh - 24px);box-shadow:0 20px 60px rgba(0,0,0,.45)}
+dialog::backdrop{background:rgba(5,8,14,.62)}
+.dl{padding:20px;display:grid;gap:14px}
+.set{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.set small,.dl p{color:var(--mu);margin:0;font-size:.88rem}
+input[type=number]{width:100px;min-height:42px;border-radius:10px;border:1px solid var(--line);background:var(--card2);padding:0 10px}
+.err{color:#f87171;font-size:.85rem;min-height:1.1em}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+.acts.end{justify-content:flex-end}
+.sw{width:50px;height:28px;border-radius:99px;border:1px solid var(--line);background:var(--card2);position:relative;padding:0}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--mu);transition:transform .2s}
+.sw[aria-checked=true]{background:var(--t)}.sw[aria-checked=true]::after{transform:translateX(22px);background:#fff}
+#toasts{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);display:grid;gap:8px;z-index:99;width:min(92vw,380px);pointer-events:none}
+.toast{background:var(--tx);color:var(--bg);padding:10px 14px;border-radius:12px;font-size:.9rem;box-shadow:var(--sh);animation:ti .25s ease}
+@keyframes ti{from{opacity:0;transform:translateY(8px)}}
+@media(prefers-reduced-motion:reduce){*,::before,::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M4 8l8 6 8-6"/></symbol>
+<symbol id="clk" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+<symbol id="chk" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></symbol>
+<symbol id="sum" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></symbol>
+<symbol id="tgt" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r=".6"/></symbol>
+<symbol id="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/></symbol>
+<symbol id="moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 019.5 4 8 8 0 1020 14.5z"/></symbol>
+<symbol id="von" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 010 7M19 6a8.5 8.5 0 010 12"/></symbol>
+<symbol id="voff" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l5 6M22 9l-5 6"/></symbol>
+<symbol id="cog" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3h0a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9v0a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></symbol>
+<symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+<symbol id="undo" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/></symbol>
+</defs></svg>
+
+<div class="wrap">
+<header>
+  <div class="brand">
+    <div class="logo" aria-hidden="true"><svg class="i"><use href="#mail"/></svg></div>
+    <div><h1>MailPulse</h1><p class="sub">Email Productivity Tracker</p></div>
+  </div>
+  <div class="clock" aria-label="Current local date and time"><b id="time">--:--</b><span id="date"></span></div>
+  <div class="tools">
+    <button class="ib" id="bTheme" aria-label="Switch theme"><svg class="i"><use id="uTheme" href="#sun"/></svg><span class="t" id="tTheme">Light</span></button>
+    <button class="ib" id="bSound" aria-pressed="true" aria-label="Sound"><svg class="i"><use id="uSound" href="#von"/></svg><span class="t" id="tSound">Sound on</span></button>
+    <button class="ib" id="bSet" aria-label="Open settings"><svg class="i"><use href="#cog"/></svg><span class="t">Settings</span></button>
+  </div>
+</header>
+
+<main>
+<section class="stats" aria-label="Statistics">
+  <article class="card t" id="cTot">
+    <div class="lab"><span class="ic"><svg class="i"><use href="#sum"/></svg></span>Overall total</div>
+    <div class="num" id="nTot">0</div>
+    <div class="hint" id="hTot">Waiting 0 + Resolved 0</div>
+  </article>
+  <article class="card w" id="cW">
+    <div class="lab"><span class="ic"><svg class="i"><use href="#clk"/></svg></span>Sent as Waiting</div>
+    <div class="num" id="nW">0</div>
+    <div class="hint">Awaiting a reply or action</div>
+    <div class="btns">
+      <button class="b sub" data-cat="w" data-d="-1" id="sW" aria-label="Remove one Waiting email"><svg class="i"><use href="#minus"/></svg>1</button>
+      <button class="b add" data-cat="w" data-d="1" aria-label="Add one Waiting email"><svg class="i"><use href="#plus"/></svg>1 Waiting</button>
+    </div>
+  </article>
+  <article class="card r" id="cR">
+    <div class="lab"><span class="ic"><svg class="i"><use href="#chk"/></svg></span>Sent as Resolved</div>
+    <div class="num" id="nR">0</div>
+    <div class="hint">Fully completed</div>
+    <div class="btns">
+      <button class="b sub" data-cat="r" data-d="-1" id="sR" aria-label="Remove one Resolved email"><svg class="i"><use href="#minus"/></svg>1</button>
+      <button class="b add" data-cat="r" data-d="1" aria-label="Add one Resolved email"><svg class="i"><use href="#plus"/></svg>1 Resolved</button>
+    </div>
+  </article>
+  <article class="card g" id="cH">
+    <div class="lab"><span class="ic"><svg class="i"><use href="#tgt"/></svg></span>Hourly performance</div>
+    <div class="num"><span id="nH">0</span><span style="font-size:1.4rem;color:var(--mu)"> / <span id="gH">11</span></span></div>
+    <div class="bar" role="progressbar" aria-label="Progress toward hourly goal" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="pb"><i id="pf"></i></div>
+    <div class="hint" id="hH"></div>
+    <div class="hint" id="hR"></div>
+    <div class="ok"><svg class="i"><use href="#chk"/></svg>Hourly goal achieved!</div>
+  </article>
+</section>
+
+<div class="lower">
+  <section class="card" aria-labelledby="hh">
+    <div class="row"><h2 id="hh">Hourly breakdown</h2><span class="hint" id="curHr"></span></div>
+    <div class="scroll"><table><thead><tr><th>Hour</th><th>Waiting</th><th>Resolved</th><th>Total</th><th>Goal</th></tr></thead><tbody id="hBody"></tbody></table></div>
+  </section>
+  <section class="card" aria-labelledby="ah">
+    <div class="row"><h2 id="ah">Recent activity</h2><button class="ghost" id="bUndo"><svg class="i"><use href="#undo"/></svg>Undo last action</button></div>
+    <ul class="log" id="log"></ul>
+  </section>
+</div>
+</main>
+<p class="foot">Data is stored only in this browser on this device. It is not synced anywhere.</p>
+</div>
+
+<div class="sr" role="status" aria-live="polite" id="live"></div>
+<div id="toasts" role="status" aria-live="polite"></div>
+
+<dialog id="dSet" aria-labelledby="dsT"><div class="dl">
+  <div class="row" style="margin:0"><h2 id="dsT">Settings</h2><button class="ghost" id="xSet" aria-label="Close settings">Close</button></div>
+  <div class="set"><label for="goal"><b>Hourly target</b><br><small>Emails per hour, 1 to 500</small></label>
+    <span class="acts"><input type="number" id="goal" min="1" max="500" step="1" inputmode="numeric"><button class="ghost" id="saveGoal">Save</button></span></div>
+  <div class="err" id="goalErr" role="alert"></div>
+  <div class="set"><span id="lSnd"><b>Notification sound</b></span><button class="sw" role="switch" id="swSnd" aria-labelledby="lSnd"></button></div>
+  <div class="set"><span id="lThm"><b>Light theme</b></span><button class="sw" role="switch" id="swThm" aria-labelledby="lThm"></button></div>
+  <hr style="border:0;border-top:1px solid var(--line);width:100%">
+  <div><b>Data</b><p>Everything is saved locally in this browser. Exports and imports never leave your device.</p></div>
+  <div class="acts"><button class="ghost" id="eCsv">Export CSV</button><button class="ghost" id="eJson">Export JSON backup</button><button class="ghost" id="iJson">Import JSON backup</button></div>
+  <input type="file" id="file" accept="application/json,.json" hidden>
+  <div class="acts"><button class="ghost danger" id="rHour">Reset current hour</button><button class="ghost danger" id="rAll">Reset all data</button></div>
+</div></dialog>
+
+<dialog id="dCf" aria-labelledby="cfT"><div class="dl">
+  <h2 id="cfT">Confirm</h2><p id="cfM"></p>
+  <div class="acts end"><button class="ghost" id="cfNo">Cancel</button><button class="ghost danger" id="cfYes">Confirm</button></div>
+</div></dialog>
+
+<script>
+(() => {
+'use strict';
+/* ---------- Constants & helpers ---------- */
+const KEY = 'mailpulse.v1';
+const CAT = { w: 'Waiting', r: 'Resolved' };
+const $ = id => document.getElementById(id);
+const HOUR = 36e5;
+const hourStart = ts => { const d = new Date(ts); d.setMinutes(0, 0, 0); return d.getTime(); };
+const t12 = ts => new Date(ts).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+const hrShort = h => new Date(h).toLocaleTimeString([], { hour: 'numeric' }).replace(' ', '');
+const hrLong = h => t12(h) + ' – ' + t12(h + HOUR - 60000);
+const pad = n => String(n).padStart(2, '0');
+const dayStamp = () => { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
+const fmtDay = ts => new Date(ts).toLocaleDateString([], { month: 'short', day: 'numeric' });
+
+/* ---------- State & persistence ---------- */
+const defState = () => ({ v: 1, settings: { goal: 11, sound: true, theme: 'dark' }, ledger: [] });
+
+function validate(o) {
+  if (!o || typeof o !== 'object' || o.v !== 1) return null;
+  const s = o.settings;
+  if (!s || !Number.isInteger(s.goal) || s.goal < 1 || s.goal > 500) return null;
+  if (typeof s.sound !== 'boolean' || (s.theme !== 'dark' && s.theme !== 'light')) return null;
+  if (!Array.isArray(o.ledger) || o.ledger.length > 100000) return null;
+  const ids = new Set(), out = [], max = Date.now() + 864e5;
+  for (const e of o.ledger) {
+    if (!e || typeof e !== 'object') return null;
+    if (!Number.isInteger(e.id) || e.id < 1 || ids.has(e.id)) return null;
+    if (!Number.isFinite(e.ts) || e.ts < 0 || e.ts > max) return null;
+    if (!['add', 'correct', 'undo', 'reset'].includes(e.kind)) return null;
+    if (e.kind !== 'reset' && !(e.cat in CAT)) return null;
+    if ((e.kind === 'correct' || e.kind === 'undo') && !ids.has(e.target)) return null;
+    if (e.kind === 'reset' && (!Number.isInteger(e.n) || e.n < 0)) return null;
+    ids.add(e.id);
+    out.push({ id: e.id, ts: e.ts, kind: e.kind, cat: e.kind === 'reset' ? null : e.cat,
+      target: e.target || null, n: e.n || 0, undone: e.undone === true, voided: e.voided === true });
+  }
+  return { v: 1, settings: { goal: s.goal, sound: s.sound, theme: s.theme }, ledger: out };
+}
+
+let startupNote = '';
+function load() {
+  let raw = null;
+  try { raw = localStorage.getItem(KEY); } catch (e) { startupNote = 'Browser storage is unavailable. Changes will not be saved.'; return defState(); }
+  if (!raw) return defState();
+  try { const v = validate(JSON.parse(raw)); if (v) return v; } catch (e) {}
+  try { localStorage.setItem(KEY + '.corrupt', raw); } catch (e) {}
+  startupNote = 'Saved data was unreadable. A copy was kept and the tracker was reset.';
+  return defState();
+}
+let S = load(), lastSaved = '', warned = false;
+function save() {
+  const j = JSON.stringify(S);
+  if (j === lastSaved) return;
+  try { localStorage.setItem(KEY, j); lastSaved = j; }
+  catch (e) { if (!warned) { warned = true; toast('Could not save to browser storage. Export a backup soon.'); } }
+}
+
+/* ---------- Ledger logic ---------- */
+const nextId = () => S.ledger.reduce((m, e) => Math.max(m, e.id), 0) + 1;
+const byId = id => S.ledger.find(e => e.id === id);
+function removedSet() { const r = new Set(); for (const e of S.ledger) if (e.kind === 'correct' && !e.undone) r.add(e.target); return r; }
+function activeAdds() { const r = removedSet(); return S.ledger.filter(e => e.kind === 'add' && !e.undone && !e.voided && !r.has(e.id)); }
+function push(e) { const x = Object.assign({ id: nextId(), ts: Date.now(), target: null, n: 0, undone: false, voided: false }, e); S.ledger.push(x); return x; }
+
+function derive(now) {
+  const tot = { w: 0, r: 0 }, hours = new Map(), hk = hourStart(now);
+  for (const e of activeAdds()) {
+    tot[e.cat]++;
+    const h = hourStart(e.ts);
+    if (!hours.has(h)) hours.set(h, { w: 0, r: 0 });
+    hours.get(h)[e.cat]++;
+  }
+  if (!hours.has(hk)) hours.set(hk, { w: 0, r: 0 });
+  const cur = hours.get(hk), count = cur.w + cur.r, goal = S.settings.goal;
+  return { tot, hours, hk, cur, count, goal, remaining: Math.max(0, goal - count), pct: count / goal * 100 };
+}
+
+function adjust(cat, dir) {
+  if (dir > 0) { push({ kind: 'add', cat }); chime(); flash(cat, '+1'); say(cat, 'added'); }
+  else {
+    const a = activeAdds().filter(e => e.cat === cat).pop();
+    if (!a) return;
+    push({ kind: 'correct', cat, target: a.id }); flash(cat, '−1 corrected'); say(cat, 'corrected');
+  }
+  commit();
+}
+
+function eligible(e) {
+  if (e.undone) return false;
+  if (e.kind === 'add') return !e.voided && !removedSet().has(e.id);
+  if (e.kind === 'correct') { const t = byId(e.target); return !!t && !t.undone && !t.voided; }
+  return false;
+}
+function lastEligible() { for (let i = S.ledger.length - 1; i >= 0; i--) if (eligible(S.ledger[i])) return S.ledger[i]; return null; }
+function undoLast() {
+  const e = lastEligible();
+  if (!e || e.undone) { toast('Nothing to undo.'); return; }
+  e.undone = true;
+  push({ kind: 'undo', cat: e.cat, target: e.id });
+  toast('Undid: ' + (e.kind === 'add' ? '+1 ' : 'correction of ') + CAT[e.cat]);
+  commit();
+}
+
+function resetHour() {
+  const hk = hourStart(Date.now()), r = removedSet(); let n = 0;
+  for (const e of S.ledger) if (e.kind === 'add' && !e.undone && !e.voided && !r.has(e.id) && hourStart(e.ts) === hk) { e.voided = true; n++; }
+  push({ kind: 'reset', n });
+  toast(n ? 'Current hour reset. ' + n + ' email' + (n > 1 ? 's' : '') + ' removed.' : 'Current hour was already empty.');
+  commit();
+}
+function resetAll() { S.ledger = []; toast('All counters and history were reset.'); commit(); }
+
+/* ---------- Sound ---------- */
+let ac = null, lastSnd = -1;
+function chime() {
+  if (!S.settings.sound) return;
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    ac = ac || new AC();
+    if (ac.state === 'suspended') ac.resume();
+    const t = ac.currentTime;
+    if (lastSnd >= 0 && t - lastSnd < 0.3) return;
+    lastSnd = t;
+    [[880, 0], [1318.5, 0.11]].forEach(([f, d]) => {
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.type = 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t + d);
+      g.gain.exponentialRampToValueAtTime(0.16, t + d + 0.015);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + d + 0.22);
+      o.connect(g); g.connect(ac.destination);
+      o.start(t + d); o.stop(t + d + 0.24);
+    });
+  } catch (e) { /* audio unsupported: ignore */ }
+}
+
+/* ---------- Rendering ---------- */
+const last = {};
+function setText(id, v) { const el = $(id); const s = String(v); if (el.textContent !== s) { el.textContent = s; return true; } return false; }
+function bump(id) { const el = $(id); el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
+let renderedHour = 0, wasDone = null, liveTimer = 0, liveMsg = '';
+
+function render() {
+  const now = Date.now(), d = derive(now), tot = d.tot.w + d.tot.r;
+  document.documentElement.dataset.theme = S.settings.theme;
+  document.querySelector('meta[name=theme-color]').content = S.settings.theme === 'dark' ? '#0f1218' : '#f3f5f9';
+  if (setText('nW', d.tot.w)) bump('nW');
+  if (setText('nR', d.tot.r)) bump('nR');
+  if (setText('nTot', tot)) bump('nTot');
+  setText('hTot', 'Waiting ' + d.tot.w + ' + Resolved ' + d.tot.r);
+  $('sW').disabled = d.tot.w === 0; $('sR').disabled = d.tot.r === 0;
+  setText('nH', d.count); setText('gH', d.goal);
+  const pct = Math.round(d.pct * 10) / 10;
+  $('pf').style.width = Math.min(100, d.pct) + '%';
+  const pb = $('pb'); pb.setAttribute('aria-valuenow', Math.min(100, Math.round(d.pct)));
+  setText('hH', pct.toFixed(1) + '% of target · Waiting ' + d.cur.w + ' + Resolved ' + d.cur.r);
+  setText('hR', 'Remaining: ' + d.remaining);
+  const done = d.count >= d.goal, cH = $('cH');
+  cH.classList.toggle('done', done);
+  if (done && wasDone === false) { cH.classList.remove('pulse'); void cH.offsetWidth; cH.classList.add('pulse'); }
+  wasDone = done;
+  setText('curHr', 'Current hour: ' + hrLong(d.hk));
+  renderedHour = d.hk;
+  // Hourly table
+  const rows = [...d.hours.entries()].sort((a, b) => b[0] - a[0]).slice(0, 48).map(([h, c]) => {
+    const T = c.w + c.r, ok = T >= d.goal, cur = h === d.hk;
+    const lbl = hrShort(h) + '–' + hrShort(h + HOUR) + (h < hourStart(now) - 12 * HOUR ? ' (' + fmtDay(h) + ')' : '');
+    return '<tr' + (cur ? ' class="cur"' : '') + '><td>' + lbl + (cur ? '<span class="tag">Now</span>' : '') + '</td><td>' + c.w + '</td><td>' + c.r + '</td><td>' + T + '</td><td>' + (ok ? '✓ Achieved' : (d.goal - T) + ' remaining') + '</td></tr>';
+  });
+  $('hBody').innerHTML = rows.join('');
+  // Activity
+  const removed = removedSet(), log = $('log');
+  if (!S.ledger.length) log.innerHTML = '<li class="empty" style="display:block">No activity yet. Press +1 Waiting or +1 Resolved to start counting.</li>';
+  else log.innerHTML = S.ledger.slice(-60).reverse().map(e => {
+    let chip, text, cls = e.cat || 'x', dim = false;
+    if (e.kind === 'add') { chip = '+1'; text = 'Sent as ' + CAT[e.cat]; const st = e.undone ? 'undone' : e.voided ? 'hour reset' : removed.has(e.id) ? 'corrected' : ''; if (st) { dim = true; text += ' <span class="tag">' + st + '</span>'; } }
+    else if (e.kind === 'correct') { chip = '−1'; text = 'Corrected ' + CAT[e.cat] + ' count'; if (e.undone) { dim = true; text += ' <span class="tag">undone</span>'; } }
+    else if (e.kind === 'undo') { chip = '↶'; const t = byId(e.target); text = 'Undid ' + (t && t.kind === 'correct' ? 'correction' : '+1') + ' (' + CAT[e.cat] + ')'; }
+    else { chip = '⟲'; text = 'Reset current hour (' + e.n + ' removed)'; }
+    return '<li class="' + cls + (dim ? ' dim' : '') + '"><time datetime="' + new Date(e.ts).toISOString() + '">' + t12(e.ts) + '</time><span class="chip">' + chip + '</span><span class="m">' + text + '</span></li>';
+  }).join('');
+  $('bUndo').disabled = !lastEligible();
+  // Header controls & settings
+  const dark = S.settings.theme === 'dark', snd = S.settings.sound;
+  $('uTheme').setAttribute('href', dark ? '#sun' : '#moon'); setText('tTheme', dark ? 'Light' : 'Dark');
+  $('bTheme').setAttribute('aria-label', dark ? 'Switch to light theme' : 'Switch to dark theme');
+  $('uSound').setAttribute('href', snd ? '#von' : '#voff'); setText('tSound', snd ? 'Sound on' : 'Sound off');
+  $('bSound').setAttribute('aria-pressed', snd); $('bSound').setAttribute('aria-label', snd ? 'Sound on. Turn off' : 'Sound off. Turn on');
+  $('swSnd').setAttribute('aria-checked', snd); $('swThm').setAttribute('aria-checked', !dark);
+}
+function commit() { save(); render(); }
+
+/* ---------- Feedback ---------- */
+function toast(msg) {
+  const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg;
+  const box = $('toasts'); box.appendChild(t);
+  while (box.children.length > 2) box.firstChild.remove();
+  setTimeout(() => t.remove(), 2600);
+}
+function flash(cat, msg) { const c = $(cat === 'w' ? 'cW' : 'cR'); c.classList.remove('flash'); void c.offsetWidth; c.dataset.msg = msg; c.classList.add('flash'); }
+function say(cat, verb) {
+  clearTimeout(liveTimer);
+  liveTimer = setTimeout(() => { const d = derive(Date.now()); $('live').textContent = 'Waiting ' + d.tot.w + ', Resolved ' + d.tot.r + ', total ' + (d.tot.w + d.tot.r) + '. This hour ' + d.count + ' of ' + d.goal + '.'; }, 600);
+}
+function confirmDlg(title, msg, ok) {
+  return new Promise(res => {
+    const dlg = $('dCf'); $('cfT').textContent = title; $('cfM').textContent = msg; $('cfYes').textContent = ok;
+    let result = false;
+    const yes = () => { result = true; dlg.close(); }, no = () => dlg.close();
+    const fin = () => { $('cfYes').removeEventListener('click', yes); $('cfNo').removeEventListener('click', no); res(result); };
+    $('cfYes').addEventListener('click', yes); $('cfNo').addEventListener('click', no);
+    dlg.addEventListener('close', fin, { once: true });
+    dlg.showModal(); $('cfNo').focus();
+  });
+}
+
+/* ---------- Export / import ---------- */
+function download(name, text, type) {
+  try {
+    const url = URL.createObjectURL(new Blob([text], { type }));
+    const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    toast('Export started: ' + name);
+  } catch (e) { toast('Export failed in this browser.'); }
+}
+const csvEsc = v => { v = String(v); return /[",\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+function exportCsv() {
+  const removed = removedSet(), L = [['Timestamp', 'Action', 'Category', 'Count change', 'Hourly period', 'Status']];
+  for (const e of S.ledger) {
+    const t = e.kind === 'correct' || e.kind === 'undo' ? (byId(e.target) || e) : e;
+    const per = e.kind === 'reset' ? '' : hrLong(hourStart(t.ts)).replace(/ – /, ' - ');
+    let a, ch, st = '';
+    if (e.kind === 'add') { a = 'Sent'; ch = '+1'; st = e.undone ? 'Undone' : e.voided ? 'Removed by hour reset' : removed.has(e.id) ? 'Corrected' : 'Active'; }
+    else if (e.kind === 'correct') { a = 'Correction'; ch = '-1'; st = e.undone ? 'Undone' : 'Applied'; }
+    else if (e.kind === 'undo') { a = 'Undo'; ch = t.kind === 'add' ? '-1' : '+1'; st = 'Undo of entry ' + e.target; }
+    else { a = 'Reset current hour'; ch = '-' + e.n; st = 'Applied'; }
+    L.push([new Date(e.ts).toISOString(), a, e.cat ? CAT[e.cat] : '', ch, per, st]);
+  }
+  const d = derive(Date.now());
+  L.push([], ['Summary'], ['Waiting total', d.tot.w], ['Resolved total', d.tot.r], ['Total recorded emails', d.tot.w + d.tot.r], ['Hourly goal', d.goal], [],
+    ['Hourly period', 'Waiting', 'Resolved', 'Total', 'Goal status']);
+  [...d.hours.entries()].sort((a, b) => a[0] - b[0]).forEach(([h, c]) => L.push([new Date(h).toLocaleDateString() + ' ' + hrLong(h).replace(/ – /, ' - '), c.w, c.r, c.w + c.r, c.w + c.r >= d.goal ? 'Achieved' : (d.goal - c.w - c.r) + ' remaining']));
+  download('MailPulse-activity-' + dayStamp() + '.csv', '\ufeff' + L.map(r => r.map(csvEsc).join(',')).join('\r\n'), 'text/csv;charset=utf-8');
+}
+function exportJson() {
+  download('MailPulse-backup-' + dayStamp() + '.json', JSON.stringify({ app: 'MailPulse', exportedAt: new Date().toISOString(), v: 1, settings: S.settings, ledger: S.ledger }, null, 2), 'application/json');
+}
+function importFile(f) {
+  if (!f) return;
+  if (f.size > 20e6) { toast('Import rejected: file is too large.'); return; }
+  const r = new FileReader();
+  r.onerror = () => toast('Import failed: could not read the file.');
+  r.onload = async () => {
+    let v = null;
+    try { v = validate(JSON.parse(r.result)); } catch (e) {}
+    if (!v) { toast('Import rejected: invalid backup. Your data was not changed.'); return; }
+    const n = v.ledger.filter(e => e.kind === 'add' && !e.undone && !e.voided).length;
+    if (await confirmDlg('Import backup?', 'This replaces ALL current data and settings with the backup (' + v.ledger.length + ' records). This cannot be undone.', 'Replace data')) {
+      S = v; wasDone = null; commit(); toast('Backup imported.');
+    }
+  };
+  r.readAsText(f);
+}
+
+/* ---------- Events (bound once) ---------- */
+document.addEventListener('click', e => {
+  const b = e.target.closest('button[data-cat]');
+  if (!b || b.disabled) return;
+  adjust(b.dataset.cat, Number(b.dataset.d));
+});
+$('bUndo').addEventListener('click', undoLast);
+$('bTheme').addEventListener('click', () => { S.settings.theme = S.settings.theme === 'dark' ? 'light' : 'dark'; commit(); });
+const toggleSound = () => { S.settings.sound = !S.settings.sound; commit(); if (S.settings.sound) chime(); };
+$('bSound').addEventListener('click', toggleSound);
+$('swSnd').addEventListener('click', toggleSound);
+$('swThm').addEventListener('click', () => { S.settings.theme = S.settings.theme === 'dark' ? 'light' : 'dark'; commit(); });
+$('bSet').addEventListener('click', () => { $('goal').value = S.settings.goal; $('goalErr').textContent = ''; $('dSet').showModal(); });
+$('xSet').addEventListener('click', () => $('dSet').close());
+$('dSet').addEventListener('click', e => { if (e.target === $('dSet')) $('dSet').close(); });
+$('saveGoal').addEventListener('click', () => {
+  const raw = $('goal').value.trim(), n = Number(raw);
+  if (!raw || !Number.isInteger(n) || n < 1 || n > 500) { $('goalErr').textContent = 'Enter a whole number from 1 to 500.'; $('goal').focus(); return; }
+  $('goalErr').textContent = ''; S.settings.goal = n; commit(); toast('Hourly target set to ' + n + '.');
+});
+$('eCsv').addEventListener('click', exportCsv);
+$('eJson').addEventListener('click', exportJson);
+$('iJson').addEventListener('click', () => $('file').click());
+$('file').addEventListener('change', e => { importFile(e.target.files[0]); e.target.value = ''; });
+$('rHour').addEventListener('click', async () => {
+  if (await confirmDlg('Reset current hour?', 'This removes every email counted in the current hour from the totals and the hourly breakdown. Earlier hours are not affected.', 'Reset hour')) resetHour();
+});
+$('rAll').addEventListener('click', async () => {
+  if (await confirmDlg('Reset all data?', 'This permanently deletes the Waiting and Resolved totals, the hourly history and the whole activity log. Settings are kept. Export a backup first if you may need it.', 'Delete everything')) resetAll();
+});
+// Unlock audio on the first real gesture
+document.addEventListener('pointerdown', () => { try { const AC = window.AudioContext || window.webkitAudioContext; if (AC && S.settings.sound) { ac = ac || new AC(); if (ac.state === 'suspended') ac.resume(); } } catch (e) {} }, { once: true });
+
+/* ---------- Clock & hour rollover (single timer, timestamp based) ---------- */
+function tick() {
+  const n = new Date();
+  setText('time', n.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' }));
+  setText('date', n.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }));
+  if (hourStart(n.getTime()) !== renderedHour) render();
+}
+setInterval(tick, 1000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
+window.addEventListener('focus', tick);
+window.addEventListener('storage', e => { if (e.key === KEY) { try { const v = validate(JSON.parse(e.newValue)); if (v) { S = v; lastSaved = e.newValue; render(); } } catch (x) {} } });
+
+render(); tick(); save();
+if (startupNote) toast(startupNote);
+})();
+</script>
+</body>
+</html>
